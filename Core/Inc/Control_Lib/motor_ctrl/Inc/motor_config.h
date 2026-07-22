@@ -5,6 +5,9 @@
 #define INTEGRAL_LIMIT 0.5
 #define DT 10 // ms
 
+#define ARM_ENCODER_CPR 424.0f
+#define ARM_RATIO 30.0f
+
 // AX01                    B10
 // GO_1         T3C1       A6
 // GO_2         T3C2       A7

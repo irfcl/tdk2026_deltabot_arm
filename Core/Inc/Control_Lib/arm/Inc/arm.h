@@ -8,27 +8,43 @@
 extern "C" {
 #endif
 
-extern UART_HandleTypeDef huart3;
-extern TIM_HandleTypeDef htim5;
-extern TIM_HandleTypeDef htim3;
+//extern UART_HandleTypeDef huart3;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim1;
-extern TIM_HandleTypeDef htim12;
+extern TIM_HandleTypeDef htim5;
+extern TIM_HandleTypeDef htim8;
+extern TIM_HandleTypeDef htim3;
+
+
 // C 函數宣告
-extern float cascade_height;
-extern int standard_pos_1,standard_pos_2;
-extern int servo1_pos, servo2_pos, servo3_pos;
-extern int gripper_open, gripper_close;
-extern int camera_front, camera_down;
-extern int camera_servo_pos;
-extern int set_to_zero;
-extern int basket_pos1, basket_pos2, basket_grab;
-extern int basket_right_pos, basket_left_pos;
-extern int doll_arm_pos, doll_claw_pos;
-extern int doll_pos1, doll_pos2, doll_extend, doll_open;
 
 void arm_init(void);                        // init arm
 void arm_timer_callback(void);              // arm timer callback
 void arm_cascade_set_to_zero(void* pvParameters);         // set arm to zero position
+
+extern volatile int lower_pwm;
+extern volatile int upper_pwm;
+extern volatile int intake_pwm;
+
+extern volatile int lower_cnt;
+extern volatile int upper_cnt;
+extern volatile int intake_cnt;
+
+extern volatile float lower_deg;
+extern volatile float upper_deg;
+extern volatile float intake_deg;
+
+extern volatile float lower_test;
+extern volatile float upper_test;
+extern volatile float intake_test;
+
+extern volatile int servo1_gobilda_pulse;
+extern volatile int servo2_wrist_deg;
+extern volatile int servo3_claw_deg;
+extern volatile int servo4_fork_deg;
+
+extern volatile int roller_pwm;
 
 #ifdef __cplusplus
 }

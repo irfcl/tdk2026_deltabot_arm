@@ -1,0 +1,12 @@
+<CycloneDDS>
+  <Domain Id="any">
+    <General>
+      <NetworkInterfaceAddress>wlan0</NetworkInterfaceAddress>
+      <DontRoute>false</DontRoute>
+    </General>
+    <Tracing>
+      <Verbosity>config</Verbosity>
+      <OutputFile>stdout</OutputFile>
+    </Tracing>
+  </Domain>
+</CycloneDDS>

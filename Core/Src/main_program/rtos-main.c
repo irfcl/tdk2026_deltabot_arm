@@ -22,24 +22,27 @@ int currentsp = 0;
 int sec = 0;
 int sec_x1= 0;
 
-
-void StartDefaultTask(void *argument)
+void StartDefaultTask_rtos(void *argument)
 {
-	HAL_TIM_Base_Start_IT(&htim4);
+//	arm_init();
+	HAL_TIM_Base_Start_IT(&htim5);
 	uros_init();
 	arm_init();
 
     for(;;){
         uros_agent_status_check();
+		//0710測試
+		mission_set();
+		//
         osDelay(50);
 		currentsp ++;
     }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_PeriodElapsedCallback_rtos(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-	if (htim->Instance == TIM4)
+	if (htim->Instance == TIM5)
 	{
 		arm_timer_callback();
 		send_mission();
@@ -55,9 +58,3 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   /* USER CODE END Callback 1 */
 }
-
-
-//TODO:motor_PID,chassis,odometry,
-//TODO: check other PWM output
-
-

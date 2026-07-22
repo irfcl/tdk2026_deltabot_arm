@@ -2,15 +2,12 @@
 .metadata/
 [Dd]ebug/
 [Rr]elease/
-Drivers/
-Middlewares/
-Startup/
 .launch
 
 # Build files
 *.o
 *.d
-*.ld
+# *.ld
 *.axf
 *.bin
 *.hex
@@ -18,15 +15,51 @@ Startup/
 *.lst
 *.elf
 
-# IDE specific
+# IDE & CubeMX specific
 *.launch
 *.pydevproject
 *.swp
 .idea/
 *.ioc.md5
 *.ioc.csv
+.vscode/
 
-# Other
+# OS & Other generated files
 *.log
 .DS_Store
-.vscode/
+.DS_Store?
+._*
+Thumbs.db
+
+# # STM32CubeIDE specific
+# .metadata/
+# [Dd]ebug/
+# [Rr]elease/
+# Drivers/
+# Middlewares/
+# Startup/
+# .launch
+
+# # Build files
+# *.o
+# *.d
+# *.ld
+# *.axf
+# *.bin
+# *.hex
+# *.map
+# *.lst
+# *.elf
+
+# # IDE specific
+# *.launch
+# *.pydevproject
+# *.swp
+# .idea/
+# *.ioc.md5
+# *.ioc.csv
+
+# # Other
+# *.log
+# .DS_Store
+# .vscode/
