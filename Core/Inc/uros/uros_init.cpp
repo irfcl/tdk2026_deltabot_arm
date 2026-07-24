@@ -15,6 +15,8 @@
 #include <std_msgs/msg/bool.h>
 #include <std_msgs/msg/int32.h>
 
+#include <std_msgs/msg/int16_multi_array.h>
+
 rcl_publisher_t           arm_pub;
 std_msgs__msg__Int32      arm_msg;
 rcl_publisher_t           mission_pub;
@@ -27,6 +29,9 @@ rcl_subscription_t        cmd_intake_sub;
 std_msgs__msg__Bool       cmd_intake_msg;
 rcl_subscription_t        cmd_claw_sub;
 std_msgs__msg__Bool       cmd_claw_msg;
+
+rcl_subscription_t        test_arm_sub;
+std_msgs__msg__Int16MultiArray test_arm_msg;
 
 rclc_support_t support;
 rcl_allocator_t allocator;
@@ -142,6 +147,14 @@ void uros_create_entities(void) {
 
   allocator = rcl_get_default_allocator();
 
+  //0724
+  test_arm_msg.data.data =
+      (int16_t *)malloc(sizeof(int16_t) * 8);
+
+  test_arm_msg.data.size = 8;
+  test_arm_msg.data.capacity = 8;
+  //
+
   init_options = rcl_get_zero_initialized_init_options();
   rcl_init_options_init(&init_options, allocator);
   rcl_init_options_set_domain_id(&init_options, DOMAIN_ID);
@@ -207,6 +220,19 @@ void uros_create_entities(void) {
     cmd_claw_msg.data = false;
   //
 
+  //0724
+    rc = rclc_subscription_init_default(
+        &test_arm_sub,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16MultiArray),
+        "robot/test_arm");
+
+    if(rc != RCL_RET_OK){
+        status = AGENT_WAITING;
+        return;
+    }
+    //
+
   // Initialize timer for publishing
   rc = rclc_timer_init_default(
     &pub_timer,
@@ -216,13 +242,14 @@ void uros_create_entities(void) {
   if(rc != RCL_RET_OK){ status = AGENT_WAITING; return; }
 
   // Create executor (1 timer + 1 subscription)
-  rc = rclc_executor_init(&executor, &support.context, 4, &allocator);
+  rc = rclc_executor_init(&executor, &support.context, 5, &allocator);
   if(rc != RCL_RET_OK){ status = AGENT_WAITING; return; }
 
   rclc_executor_add_subscription(&executor, &cmd_arm_sub, &cmd_arm_msg, &cmd_arm_sub_cb, ON_NEW_DATA);
   rclc_executor_add_subscription(&executor, &cmd_intake_sub, &cmd_intake_msg, &cmd_intake_sub_cb, ON_NEW_DATA);
-   rclc_executor_add_subscription(&executor, &cmd_claw_sub, &cmd_claw_msg, &cmd_claw_sub_cb, ON_NEW_DATA);
+  rclc_executor_add_subscription(&executor, &cmd_claw_sub, &cmd_claw_msg, &cmd_claw_sub_cb, ON_NEW_DATA);
   rclc_executor_add_timer(&executor, &pub_timer);
+  rclc_executor_add_subscription(&executor, &test_arm_sub, &test_arm_msg, &cmd_test_arm_sub_cb, ON_NEW_DATA);
 }
 
 void uros_destroy_entities(void) {
@@ -236,6 +263,9 @@ void uros_destroy_entities(void) {
   // Destroy subscription
   rcl_subscription_fini(&cmd_arm_sub, &node);
 
+  rcl_subscription_fini(&test_arm_sub, &node);
+  free(test_arm_msg.data.data);
+
   // Destroy timer
   rcl_timer_fini(&pub_timer);
 
@@ -247,13 +277,25 @@ void uros_destroy_entities(void) {
   rclc_support_fini(&support);
 }
 
+//0724
+//void cmd_arm_sub_cb(const void* msgin) {
+//  const std_msgs__msg__Int32 * msg = (const std_msgs__msg__Int32 *)msgin;
+//  cmd_arm_msg = *msg;
+//  mission_type = cmd_arm_msg.data;
+//  mission_ctrl();
+//}
+void cmd_arm_sub_cb(const void* msgin)
+{
+    const std_msgs__msg__Int32 *msg =
+        (const std_msgs__msg__Int32 *)msgin;
 
-void cmd_arm_sub_cb(const void* msgin) {
-  const std_msgs__msg__Int32 * msg = (const std_msgs__msg__Int32 *)msgin;
-  cmd_arm_msg = *msg;
-  mission_type = cmd_arm_msg.data;
-  mission_ctrl();
+    arm_mode = ARM_MISSION;
+
+    mission_type = msg->data;
+
+    mission_ctrl();
 }
+//
 
 void cmd_intake_sub_cb(const void* msgin) {
   const std_msgs__msg__Bool * msg = (const std_msgs__msg__Bool *)msgin;
@@ -268,6 +310,28 @@ void cmd_claw_sub_cb(const void* msgin) {
 
   //TODO
 }
+
+//0724
+void cmd_test_arm_sub_cb(const void *msgin)
+{
+    const std_msgs__msg__Int16MultiArray *msg =
+        (const std_msgs__msg__Int16MultiArray *)msgin;
+
+    if(msg->data.size < 8)
+        return;
+
+    lower_test = msg->data.data[0];
+    upper_test = msg->data.data[1];
+    intake_test = msg->data.data[2];
+
+    roller_pwm = msg->data.data[3];
+
+    servo1_gobilda_pulse = msg->data.data[4];
+    servo2_wrist_deg     = msg->data.data[5];
+    servo3_claw_deg      = msg->data.data[6];
+    servo4_fork_deg      = msg->data.data[7];
+}
+//
 
 void pub_timer_cb(rcl_timer_t * timer, int64_t last_call_time){
   arm_msg.data = mission_status;

@@ -6,6 +6,14 @@ extern "C" {
 #endif
 
 // Include statements
+//0724
+typedef enum
+{
+    ARM_MANUAL = 0,
+    ARM_MISSION
+} ArmMode;
+//
+extern volatile ArmMode arm_mode;
 
 extern int mission_type;
 extern int prev_mission_type;

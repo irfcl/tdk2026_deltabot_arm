@@ -7,6 +7,10 @@ int prev_mission_type = 0;
 int mission_status = 0;
 int task_created = 0;
 
+//0724
+volatile ArmMode arm_mode = ARM_MANUAL;
+//
+
 void mission_init(void)
 {
     arm_init();
