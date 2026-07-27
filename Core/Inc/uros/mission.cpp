@@ -8,8 +8,13 @@ int mission_status = 0;
 int task_created = 0;
 
 //0724
-volatile ArmMode arm_mode = ARM_MANUAL;
+volatile ArmMode arm_mode = ARM_MISSION;
 //
+
+//0728
+extern volatile bool lower_homing;
+extern volatile bool upper_homing;
+extern volatile bool intake_homing;
 
 void mission_init(void)
 {
@@ -32,6 +37,7 @@ void mission_ctrl(void)
     {
     BaseType_t ret;
     case 1:
+    	arm_mode = ARM_MISSION;
     	ret = xTaskCreate(mission_1, "mission_1", 512, NULL, 2, NULL);
     	if(ret != pdPASS)
     	{
@@ -40,6 +46,7 @@ void mission_ctrl(void)
     	break;
 
     case 2:
+    	arm_mode = ARM_MISSION;
     	ret = xTaskCreate(mission_2, "mission_2", 512, NULL, 2, NULL);
     	if(ret != pdPASS)
     	{
@@ -48,7 +55,17 @@ void mission_ctrl(void)
     	break;
 
     case 3:
+    	arm_mode = ARM_MISSION;
     	ret = xTaskCreate(mission_3, "mission_3", 512, NULL, 2, NULL);
+    	if(ret != pdPASS)
+    	{
+    	    task_created = -1;
+    	}
+    	break;
+
+    case 99:
+    	arm_mode = ARM_MISSION;
+    	ret = xTaskCreate(mission_99, "mission_99", 512, NULL, 2, NULL);
     	if(ret != pdPASS)
     	{
     	    task_created = -1;
@@ -59,9 +76,21 @@ void mission_ctrl(void)
 
 static void finishMission()
 {
+	arm_mode = ARM_MANUAL;
     mission_status = mission_type;
     task_created = 0;
     vTaskDelete(NULL);
+}
+
+//homing
+void mission_99(void *pvParameters)
+{
+    mission_status = 0;
+    arm_homing();
+    while(lower_homing || upper_homing || intake_homing){
+        osDelay(20);
+    }
+    finishMission();
 }
 
 void mission_1(void *pvParameters)
@@ -84,7 +113,6 @@ void mission_1(void *pvParameters)
     servo1_gobilda_pulse = 550;
     osDelay(2000);
 
-
     finishMission();
 }
 
@@ -105,6 +133,7 @@ void mission_3(void *pvParameters)
 
     finishMission();
 }
+
 
 
 //#include "mission.hpp"

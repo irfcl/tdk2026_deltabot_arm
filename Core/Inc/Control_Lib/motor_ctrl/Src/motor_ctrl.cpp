@@ -93,8 +93,15 @@ void JointMotor_polulu::update()
 {
 //    float now = getAngle();
 //    float err = _targetDeg - now;
+//    if(fabs(err) < 0.5f)
+//    {
+//        stop();
+//        _integral = 0;
+//        return;
+//    }
 //    _integral += err;
-//    float pwm = _kp * err + _ki * _integral + _kd * (err - _lastError);
+//    float derivative = err - _lastError;
+//    float pwm = _kp * err + _ki * _integral + _kd * derivative;
 //    setPWM((int)pwm);
 //    _lastError = err;
     float err = _targetDeg - getAngle();
@@ -209,8 +216,15 @@ void JointMotor_vnh::update()
 {
 //    float now = getAngle();
 //    float err = _targetDeg - now;
+//    if(fabs(err) < 0.5f)
+//    {
+//        stop();
+//        _integral = 0;
+//        return;
+//    }
 //    _integral += err;
-//    float pwm = _kp * err + _ki * _integral + _kd * (err - _lastError);
+//    float derivative = err - _lastError;
+//    float pwm = _kp * err + _ki * _integral + _kd * derivative;
 //    setPWM((int)pwm);
 //    _lastError = err;
     float err = _targetDeg - getAngle();

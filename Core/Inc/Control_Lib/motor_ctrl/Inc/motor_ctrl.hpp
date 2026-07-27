@@ -111,9 +111,9 @@ private:
 
     float _targetDeg;
 
-    float _kp = 8.0f;
+    float _kp = 10.0f;
     float _ki = 0.0f;
-    float _kd = 0.0f;
+    float _kd = 1.0f;
 
     float _integral = 0.0f;
     float _lastError = 0.0f;
@@ -161,9 +161,9 @@ private:
 
     float _targetDeg;
 
-    float _kp = 8.0f;
+    float _kp = 10.0f;
     float _ki = 0.0f;
-    float _kd = 0.0f;
+    float _kd = 1.0f;
 
     float _integral = 0.0f;
     float _lastError = 0.0f;

@@ -36,10 +36,14 @@ volatile float intake_test = 0;
 
 volatile int servo1_gobilda_pulse = 590;
 volatile int servo2_wrist_deg = 60;
-volatile int servo3_claw_deg = 60;
+volatile int servo3_claw_deg = 100;
 volatile int servo4_fork_deg = 60;
 
 volatile int roller_pwm = 0;
+
+volatile bool lower_homing = false;
+volatile bool upper_homing = false;
+volatile bool intake_homing = false;
 
 void arm_init(void) {
     lower_joint.init();
@@ -71,17 +75,42 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 //	lower_joint.setPWM(lower_pwm);
 //	upper_joint.setPWM(upper_pwm);
 //	intake_joint.setPWM(intake_pwm);
-    lower_joint.setTarget(lower_test);
-    upper_joint.setTarget(upper_test);
-    intake_joint.setTarget(intake_test);
 
-	lower_joint.update();
-	upper_joint.update();
-	intake_joint.update();
+//    lower_joint.setTarget(lower_test);
+//    upper_joint.setTarget(upper_test);
+//    intake_joint.setTarget(intake_test);
+//
+//	lower_joint.update();
+//	upper_joint.update();
+//	intake_joint.update();
+
+	if(lower_homing){
+	    lower_joint.setPWM(-250);     // 朝Home方向慢慢跑
+	}
+	else{
+	    lower_joint.setTarget(lower_test);
+	    lower_joint.update();
+	}
+
+	if(upper_homing){
+	    upper_joint.setPWM(250);
+	}
+	else{
+	    upper_joint.setTarget(upper_test);
+	    upper_joint.update();
+	}
+
+	if(intake_homing){
+	    intake_joint.setPWM(-250);
+	}
+	else{
+	    intake_joint.setTarget(intake_test);
+	    intake_joint.update();
+	}
 
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo1_gobilda_pulse);
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 180));
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 300));
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_fork_deg* 2000 / 180));
 
     //0721
@@ -104,20 +133,33 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-//	if(GPIO_Pin == GPIO_PIN_2) {
-//		set_to_zero = 1;								// 設定 Cascade 歸零旗標
-//		Motor_cas.setSpeed(0.0f);						// 停止移動
-//		Motor_cas._cascade_height = CASCADE_STARTHIGHT;	// 重置 Cascade 量測高度
-//		cascade_height = CASCADE_STARTHIGHT;			// 重置 Cascade 目標高度
-//	}else if (GPIO_Pin == GPIO_PIN_13){
-//		mission_set();
-//		mis_set_time = sec;
-//	}else if (GPIO_Pin == GPIO_PIN_3){
-//		reset_x1();
-//		x1_reset_time = sec_x1;
-//		x1_reset_flag = true;
-//	}
+    if(GPIO_Pin == GPIO_PIN_13){
+        lower_joint.stop();
+        lower_joint.zero();
+        lower_test = 0;
+        lower_homing = false;
+    }
 
+    else if(GPIO_Pin == GPIO_PIN_2){
+        upper_joint.stop();
+        upper_joint.zero();
+        upper_test = 0;
+        upper_homing = false;
+    }
+
+    else if(GPIO_Pin == GPIO_PIN_3){
+        intake_joint.stop();
+        intake_joint.zero();
+        intake_test = 0;
+        intake_homing = false;
+    }
+}
+
+void arm_homing(void)
+{
+    lower_homing = true;
+    upper_homing = true;
+    intake_homing = true;
 }
 
 //#include "arm.h"

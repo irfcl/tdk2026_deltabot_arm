@@ -22,6 +22,7 @@ extern int task_created;
 
 void mission_init(void);
 void mission_ctrl(void);
+void mission_99(void *pvParameters);
 void mission_1(void *pvParameters);
 void mission_2(void *pvParameters);
 void mission_3(void *pvParameters);

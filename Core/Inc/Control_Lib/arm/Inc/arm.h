@@ -22,6 +22,7 @@ extern TIM_HandleTypeDef htim3;
 void arm_init(void);                        // init arm
 void arm_timer_callback(void);              // arm timer callback
 void arm_cascade_set_to_zero(void* pvParameters);         // set arm to zero position
+void arm_homing(void);
 
 extern volatile int lower_pwm;
 extern volatile int upper_pwm;
