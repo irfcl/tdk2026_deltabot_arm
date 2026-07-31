@@ -153,8 +153,8 @@ void JointMotor_vnh::init()
 
 void JointMotor_vnh::stop()
 {
-    HAL_GPIO_WritePin(_portA,_pinA,GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(_portB,_pinB,GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(_portA,_pinA,GPIO_PIN_SET);
+    HAL_GPIO_WritePin(_portB,_pinB,GPIO_PIN_SET);
 
     __HAL_TIM_SET_COMPARE(_pwm,_channel,0);
 }

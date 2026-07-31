@@ -23,19 +23,24 @@ void mission_init(void)
 
 void mission_ctrl(void)
 {
-    if (prev_mission_type == mission_type)
-        return;
-
-    prev_mission_type = mission_type;
+//    if (prev_mission_type == mission_type)
+//        return;
+//
+//    prev_mission_type = mission_type;
 
     if (task_created)
         return;
+
+    if(mission_type == 0)
+            return;
+
+        BaseType_t ret;
 
     task_created = 1;
 
     switch (mission_type)
     {
-    BaseType_t ret;
+//    BaseType_t ret;
     case 1:
     	arm_mode = ARM_MISSION;
     	ret = xTaskCreate(mission_1, "mission_1", 512, NULL, 2, NULL);
@@ -78,6 +83,7 @@ static void finishMission()
 {
 	arm_mode = ARM_MANUAL;
     mission_status = mission_type;
+    mission_type = 0;
     task_created = 0;
     vTaskDelete(NULL);
 }
@@ -87,7 +93,7 @@ void mission_99(void *pvParameters)
 {
     mission_status = 0;
     arm_homing();
-    while(lower_homing || upper_homing || intake_homing){
+    while(lower_homing || upper_homing){
         osDelay(20);
     }
     finishMission();
@@ -96,22 +102,72 @@ void mission_99(void *pvParameters)
 void mission_1(void *pvParameters)
 {
     mission_status = 0;
+
+    //初始
+    servo2_wrist_deg = 53;
+    servo3_claw_deg = 100;
+    servo4_fork_deg = 850;
+    osDelay(2000);
+    lower_test = 10;
+    upper_test = -70;
+    osDelay(1000);
+
+    //轉到intake方向
+    for (int i = 1; i <= 50; i++){
+    	servo4_fork_deg = 850 + ((945 - 850) * i / 50);
+        osDelay(50);
+    }
+    servo3_claw_deg = 120;
+    lower_test = -20;
+    upper_test = -50;
+    osDelay(1000);
+
+    //往稻草卷伸
     lower_test = 0;
-    upper_test = 0;
-    servo2_wrist_deg = 60;
-    servo3_claw_deg  = 60;
-    servo1_gobilda_pulse = 500;
-    osDelay(2000);
-    lower_test = -60;
-    osDelay(1500);
-    upper_test = 120;
-    osDelay(1500);
-    servo3_claw_deg = 50;
     osDelay(1000);
-    servo2_wrist_deg = 50;
+    lower_test = 30;
+    upper_test = -30;
     osDelay(1000);
-    servo1_gobilda_pulse = 550;
+    lower_test = 50;
+    upper_test = -50;
+    osDelay(1000);
+    lower_test = 75;
+    upper_test = -75;
     osDelay(2000);
+
+    //夾+抬
+    servo3_claw_deg = 85;
+    osDelay(1000);
+    roller_pwm = 1000;
+	osDelay(1000);
+    lower_test = 20;
+	osDelay(1000);
+	roller_pwm = 0;
+	upper_test = -90;
+	osDelay(2000);
+
+	//橫放到對面叉子上
+	lower_test = 0;
+	osDelay(500);
+	upper_test = -190;
+	osDelay(2000);
+	lower_test = -10;
+	osDelay(1000);
+	for (int i = 1; i <= 50; i++){
+	    servo2_wrist_deg = 53 + ((108 - 53) * i / 50);
+	    osDelay(30);
+	}
+	osDelay(500);
+    servo3_claw_deg = 110;
+    osDelay(1000);
+    upper_test = -150;
+
+
+//    //轉回去
+//    for (int i = 1; i <= 50; i++){
+//    	servo4_fork_deg = 945 - ((945 - 850) * i / 50);
+//        osDelay(100);
+//    }
 
     finishMission();
 }

@@ -13,37 +13,44 @@ int mis_set_time = 0;
 int x1_reset_time = 0;
 extern bool x1_reset_flag;
 extern int sec;												// 在 rtos-main.c 中定義的時間計數器
-extern int sec_x1;												// 在 rtos-main.c 中定義的時間計數器
+extern int sec_x1;
+							// 在 rtos-main.c 中定義的時間計數器
 JointMotor_polulu lower_joint(&htim1, &htim8, TIM_CHANNEL_1, GPIOB, GPIO_PIN_12);
 JointMotor_polulu upper_joint(&htim2, &htim8, TIM_CHANNEL_2, GPIOA, GPIO_PIN_11);
 JointMotor_vnh intake_joint(&htim4, &htim8, TIM_CHANNEL_3, GPIOB, GPIO_PIN_4, GPIOB, GPIO_PIN_5);
+JointMotor_polulu fork_joint(&htim5, &htim12, TIM_CHANNEL_1, GPIOA, GPIO_PIN_10);
 
 volatile int lower_pwm = 0;
 volatile int upper_pwm = 0;
 volatile int intake_pwm = 0;
+volatile int fork_pwm = 0;
 
 volatile int lower_cnt = 0;
 volatile int upper_cnt = 0;
 volatile int intake_cnt = 0;
+volatile int fork_cnt = 0;
 
 volatile float lower_deg = 0;
 volatile float upper_deg = 0;
 volatile float intake_deg = 0;
+volatile float fork_deg = 0;
 
 volatile float lower_test = 0;
 volatile float upper_test = 0;
 volatile float intake_test = 0;
+volatile float fork_test = 0;
 
-volatile int servo1_gobilda_pulse = 590;
-volatile int servo2_wrist_deg = 60;
+volatile int servo1_gobilda_pulse = 1000;
+volatile int servo2_wrist_deg = 62;
 volatile int servo3_claw_deg = 100;
-volatile int servo4_fork_deg = 60;
+volatile int servo4_fork_deg = 850;
 
 volatile int roller_pwm = 0;
 
 volatile bool lower_homing = false;
 volatile bool upper_homing = false;
 volatile bool intake_homing = false;
+volatile bool fork_homing = false;
 
 void arm_init(void) {
     lower_joint.init();
@@ -52,6 +59,8 @@ void arm_init(void) {
     upper_joint.stop();
     intake_joint.init();
     intake_joint.stop();
+    fork_joint.init();
+    fork_joint.stop();
 
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
@@ -67,10 +76,12 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	lower_cnt = lower_joint.getCount();
 	upper_cnt = upper_joint.getCount();
 	intake_cnt = intake_joint.getCount();
+	fork_cnt = fork_joint.getCount();
 
 	lower_deg = lower_joint.getAngle();
 	upper_deg = upper_joint.getAngle();
 	intake_deg = intake_joint.getAngle();
+	fork_deg = fork_joint.getAngle();
 
 //	lower_joint.setPWM(lower_pwm);
 //	upper_joint.setPWM(upper_pwm);
@@ -108,10 +119,19 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	    intake_joint.update();
 	}
 
+	if(fork_homing){
+	    fork_joint.setPWM(-250);
+	}
+	else{
+	    fork_joint.setTarget(fork_test);
+	    fork_joint.update();
+	}
+
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo1_gobilda_pulse);
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 300));
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_fork_deg* 2000 / 180));
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_fork_deg* 2000 / 180));
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, servo4_fork_deg);
 
     //0721
     if(roller_pwm>=0)
@@ -159,7 +179,6 @@ void arm_homing(void)
 {
     lower_homing = true;
     upper_homing = true;
-    intake_homing = true;
 }
 
 //#include "arm.h"

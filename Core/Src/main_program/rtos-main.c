@@ -25,14 +25,14 @@ int sec_x1= 0;
 void StartDefaultTask_rtos(void *argument)
 {
 //	arm_init();
-	HAL_TIM_Base_Start_IT(&htim5);
+	HAL_TIM_Base_Start_IT(&htim7);
 	uros_init();
 	arm_init();
 
     for(;;){
         uros_agent_status_check();
 		//0710測試
-		mission_set();
+		mission_ctrl();
 		//
         osDelay(50);
 		currentsp ++;
@@ -42,7 +42,7 @@ void StartDefaultTask_rtos(void *argument)
 void HAL_TIM_PeriodElapsedCallback_rtos(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-	if (htim->Instance == TIM5)
+	if (htim->Instance == TIM7)
 	{
 		arm_timer_callback();
 		send_mission();

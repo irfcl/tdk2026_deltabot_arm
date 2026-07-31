@@ -15,6 +15,8 @@ extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim8;
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim12;
 
 
 // C 函數宣告
@@ -23,6 +25,7 @@ void arm_init(void);                        // init arm
 void arm_timer_callback(void);              // arm timer callback
 void arm_cascade_set_to_zero(void* pvParameters);         // set arm to zero position
 void arm_homing(void);
+void servo_moving(float *now,float target,float speed);
 
 extern volatile int lower_pwm;
 extern volatile int upper_pwm;
@@ -44,6 +47,10 @@ extern volatile int servo1_gobilda_pulse;
 extern volatile int servo2_wrist_deg;
 extern volatile int servo3_claw_deg;
 extern volatile int servo4_fork_deg;
+extern volatile int servo1_target;
+extern volatile int servo2_target;
+extern volatile int servo3_target;
+extern volatile int servo4_target;
 
 extern volatile int roller_pwm;
 

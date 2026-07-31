@@ -293,7 +293,7 @@ void cmd_arm_sub_cb(const void* msgin)
 
     mission_type = msg->data;
 
-    mission_ctrl();
+//    mission_ctrl();
 }
 //
 
