@@ -15,6 +15,8 @@ volatile ArmMode arm_mode = ARM_MISSION;
 extern volatile bool lower_homing;
 extern volatile bool upper_homing;
 extern volatile bool intake_homing;
+extern volatile bool fork_homing;
+
 
 void mission_init(void)
 {
@@ -106,7 +108,7 @@ void mission_1(void *pvParameters)
     //初始
     servo2_wrist_deg = 53;
     servo3_claw_deg = 100;
-    servo4_fork_deg = 850;
+    servo4_slewing_deg = 850;
     osDelay(2000);
     lower_test = 10;
     upper_test = -70;
@@ -114,7 +116,7 @@ void mission_1(void *pvParameters)
 
     //轉到intake方向
     for (int i = 1; i <= 50; i++){
-    	servo4_fork_deg = 850 + ((945 - 850) * i / 50);
+    	servo4_slewing_deg = 850 + ((945 - 850) * i / 50);
         osDelay(50);
     }
     servo3_claw_deg = 120;

@@ -329,7 +329,7 @@ void cmd_test_arm_sub_cb(const void *msgin)
     servo1_gobilda_pulse = msg->data.data[4];
     servo2_wrist_deg     = msg->data.data[5];
     servo3_claw_deg      = msg->data.data[6];
-    servo4_fork_deg      = msg->data.data[7];
+    servo4_slewing_deg      = msg->data.data[7];
 }
 //
 

@@ -46,7 +46,7 @@ extern volatile float intake_test;
 extern volatile int servo1_gobilda_pulse;
 extern volatile int servo2_wrist_deg;
 extern volatile int servo3_claw_deg;
-extern volatile int servo4_fork_deg;
+extern volatile int servo4_slewing_deg;
 extern volatile int servo1_target;
 extern volatile int servo2_target;
 extern volatile int servo3_target;

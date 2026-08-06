@@ -19,31 +19,36 @@ JointMotor_polulu lower_joint(&htim1, &htim8, TIM_CHANNEL_1, GPIOB, GPIO_PIN_12)
 JointMotor_polulu upper_joint(&htim2, &htim8, TIM_CHANNEL_2, GPIOA, GPIO_PIN_11);
 JointMotor_vnh intake_joint(&htim4, &htim8, TIM_CHANNEL_3, GPIOB, GPIO_PIN_4, GPIOB, GPIO_PIN_5);
 JointMotor_polulu fork_joint(&htim5, &htim12, TIM_CHANNEL_1, GPIOA, GPIO_PIN_10);
+JointMotor_polulu sieve_joint(&htim3, &htim12, TIM_CHANNEL_2, GPIOB, GPIO_PIN_0);
 
 volatile int lower_pwm = 0;
 volatile int upper_pwm = 0;
 volatile int intake_pwm = 0;
 volatile int fork_pwm = 0;
+volatile int sieve_pwm = 0;
 
 volatile int lower_cnt = 0;
 volatile int upper_cnt = 0;
 volatile int intake_cnt = 0;
 volatile int fork_cnt = 0;
+volatile int sieve_cnt = 0;
 
 volatile float lower_deg = 0;
 volatile float upper_deg = 0;
 volatile float intake_deg = 0;
 volatile float fork_deg = 0;
+volatile float sieve_deg = 0;
 
 volatile float lower_test = 0;
 volatile float upper_test = 0;
 volatile float intake_test = 0;
 volatile float fork_test = 0;
+volatile float sieve_test = 0;
 
 volatile int servo1_gobilda_pulse = 1000;
 volatile int servo2_wrist_deg = 62;
 volatile int servo3_claw_deg = 100;
-volatile int servo4_fork_deg = 850;
+volatile int servo4_slewing_deg = 850;
 
 volatile int roller_pwm = 0;
 
@@ -51,6 +56,7 @@ volatile bool lower_homing = false;
 volatile bool upper_homing = false;
 volatile bool intake_homing = false;
 volatile bool fork_homing = false;
+volatile bool sieve_homing = false;
 
 void arm_init(void) {
     lower_joint.init();
@@ -61,13 +67,14 @@ void arm_init(void) {
     intake_joint.stop();
     fork_joint.init();
     fork_joint.stop();
+    sieve_joint.init();
+    sieve_joint.stop();
 
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 
-    //0721
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 }
 
@@ -77,11 +84,13 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	upper_cnt = upper_joint.getCount();
 	intake_cnt = intake_joint.getCount();
 	fork_cnt = fork_joint.getCount();
+	sieve_cnt = fork_joint.getCount();
 
 	lower_deg = lower_joint.getAngle();
 	upper_deg = upper_joint.getAngle();
 	intake_deg = intake_joint.getAngle();
 	fork_deg = fork_joint.getAngle();
+	sieve_deg = fork_joint.getAngle();
 
 //	lower_joint.setPWM(lower_pwm);
 //	upper_joint.setPWM(upper_pwm);
@@ -127,24 +136,32 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	    fork_joint.update();
 	}
 
+	if(sieve_homing){
+	    sieve_joint.setPWM(-250);
+	}
+	else{
+	    sieve_joint.setTarget(sieve_test);
+	    sieve_joint.update();
+	}
+
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo1_gobilda_pulse);
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 300));
-//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_fork_deg* 2000 / 180));
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, servo4_fork_deg);
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_slewing_deg* 2000 / 180));
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, servo4_slewing_deg);
 
     //0721
     if(roller_pwm>=0)
     {
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
 
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, roller_pwm);
     }
     else
     {
     	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
         __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, -roller_pwm);
     }
@@ -168,10 +185,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     }
 
     else if(GPIO_Pin == GPIO_PIN_3){
-        intake_joint.stop();
-        intake_joint.zero();
-        intake_test = 0;
-        intake_homing = false;
+        fork_joint.stop();
+        fork_joint.zero();
+        fork_test = 0;
+        fork_homing = false;
+    }
+
+    else if(GPIO_Pin == GPIO_PIN_0){
+        sieve_joint.stop();
+        sieve_joint.zero();
+        sieve_test = 0;
+        sieve_homing = false;
     }
 }
 
@@ -179,6 +203,8 @@ void arm_homing(void)
 {
     lower_homing = true;
     upper_homing = true;
+    fork_homing = true;
+    sieve_homing = true;
 }
 
 //#include "arm.h"
