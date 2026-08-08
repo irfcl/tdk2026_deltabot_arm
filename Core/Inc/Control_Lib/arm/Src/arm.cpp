@@ -8,18 +8,28 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../../../../Src/main_program/mission_ctrl.h"
+#include "servo_ctrl.hpp"
 
 int mis_set_time = 0;
 int x1_reset_time = 0;
 extern bool x1_reset_flag;
 extern int sec;												// 在 rtos-main.c 中定義的時間計數器
 extern int sec_x1;
-							// 在 rtos-main.c 中定義的時間計數器
+
 JointMotor_polulu lower_joint(&htim1, &htim8, TIM_CHANNEL_1, GPIOB, GPIO_PIN_12);
 JointMotor_polulu upper_joint(&htim2, &htim8, TIM_CHANNEL_2, GPIOA, GPIO_PIN_11);
 JointMotor_vnh intake_joint(&htim4, &htim8, TIM_CHANNEL_3, GPIOB, GPIO_PIN_4, GPIOB, GPIO_PIN_5);
 JointMotor_polulu fork_joint(&htim5, &htim12, TIM_CHANNEL_1, GPIOA, GPIO_PIN_10);
 JointMotor_polulu sieve_joint(&htim3, &htim12, TIM_CHANNEL_2, GPIOB, GPIO_PIN_0);
+
+extern I2C_HandleTypeDef hi2c2;
+PCA9685 servo_driver(&hi2c2, 0x40);
+ServoController servo1(&servo_driver, 0, 500, 2500);
+ServoController servo2(&servo_driver, 1, 500, 2500);
+ServoController servo3(&servo_driver, 2, 500, 2500);
+ServoController servo4(&servo_driver, 3, 500, 2500);
+volatile HAL_StatusTypeDef pca_i2c_status;
+volatile HAL_StatusTypeDef pca_init_status;
 
 volatile int lower_pwm = 0;
 volatile int upper_pwm = 0;
@@ -70,10 +80,19 @@ void arm_init(void) {
     sieve_joint.init();
     sieve_joint.stop();
 
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1); //舊版servo
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+
+    pca_i2c_status = HAL_I2C_IsDeviceReady(&hi2c2, 0x40 << 1, 3, 100);
+    pca_init_status = servo_driver.init(50.0f);
+//  if (servo_driver.init(50.0f) != HAL_OK){
+//      }
+    servo1.init();
+    servo2.init();
+    servo3.init();
+    servo4.init();
 
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 }
@@ -84,13 +103,13 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	upper_cnt = upper_joint.getCount();
 	intake_cnt = intake_joint.getCount();
 	fork_cnt = fork_joint.getCount();
-	sieve_cnt = fork_joint.getCount();
+	sieve_cnt = sieve_joint.getCount();
 
 	lower_deg = lower_joint.getAngle();
 	upper_deg = upper_joint.getAngle();
 	intake_deg = intake_joint.getAngle();
 	fork_deg = fork_joint.getAngle();
-	sieve_deg = fork_joint.getAngle();
+	sieve_deg = sieve_joint.getAngle();
 
 //	lower_joint.setPWM(lower_pwm);
 //	upper_joint.setPWM(upper_pwm);
@@ -144,11 +163,16 @@ void arm_timer_callback(void) {							// constantly run the servo in timer callb
 	    sieve_joint.update();
 	}
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo1_gobilda_pulse);
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 300));
-//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_slewing_deg* 2000 / 180));
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, servo4_slewing_deg);
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo1_gobilda_pulse);
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 500 + ((int32_t)servo3_claw_deg * 2000 / 300));
+////    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, 500 + ((int32_t)servo4_slewing_deg* 2000 / 180));
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, servo4_slewing_deg);
+
+	servo1.setPulse(servo1_gobilda_pulse);
+	servo2.setPulse(500 + ((int32_t)servo2_wrist_deg * 2000 / 180));
+	servo3.setPulse(500 + ((int32_t)servo3_claw_deg * 2000 / 300));
+	servo4.setPulse(servo4_slewing_deg);
 
     //0721
     if(roller_pwm>=0)
@@ -197,14 +221,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         sieve_test = 0;
         sieve_homing = false;
     }
+
+    else if(GPIO_Pin == GPIO_PIN_1){
+        intake_joint.stop();
+        intake_joint.zero();
+        intake_test = 0;
+        intake_homing = false;
+    }
 }
 
 void arm_homing(void)
 {
     lower_homing = true;
     upper_homing = true;
-    fork_homing = true;
-    sieve_homing = true;
+//    intake_homing = true;
+//    fork_homing = true;
+//    sieve_homing = true;
 }
 
 //#include "arm.h"

@@ -43,9 +43,9 @@ void mission_ctrl(void)
     switch (mission_type)
     {
 //    BaseType_t ret;
-    case 1:
+    case 301:
     	arm_mode = ARM_MISSION;
-    	ret = xTaskCreate(mission_1, "mission_1", 512, NULL, 2, NULL);
+    	ret = xTaskCreate(mission_301, "mission_301", 512, NULL, 2, NULL);
     	if(ret != pdPASS)
     	{
     	    task_created = -1;
@@ -101,7 +101,7 @@ void mission_99(void *pvParameters)
     finishMission();
 }
 
-void mission_1(void *pvParameters)
+void mission_301(void *pvParameters)
 {
     mission_status = 0;
 

@@ -59,6 +59,7 @@ extern volatile int roller_pwm;
 
 // C++ 標頭檔和類別定義
 #include "UART_servo.h"
+#include "servo_ctrl.hpp"
 
 #endif /* __cplusplus */
 
